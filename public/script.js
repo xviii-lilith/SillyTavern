@@ -2288,7 +2288,7 @@ async function Generate(type, { automatic_trigger, force_name2, resolve, reject,
                 generate_data = getNovelGenerationData(finalPromt, this_settings, this_amount_gen);
             }
             else if (main_api == 'openai') {
-                let [prompt, counts] = await prepareOpenAIMessages(name2, storyString, worldInfoBefore, worldInfoAfter, afterScenarioAnchor, promptBias, type, quiet_prompt);
+                let [prompt, counts] = await prepareOpenAIMessages(name2, charDescription, charPersonality, Scenario, worldInfoBefore, worldInfoAfter, afterScenarioAnchor, promptBias, type, quiet_prompt);
                 generate_data = { prompt: prompt };
 
                 // counts will return false if the user has not enabled the token breakdown feature

@@ -338,13 +338,22 @@ function formatWorldInfo(value) {
     return stringFormat(oai_settings.wi_format, value);
 }
 
-async function prepareOpenAIMessages(name2, storyString, worldInfoBefore, worldInfoAfter, extensionPrompt, bias, type, quietPrompt) {
+async function prepareOpenAIMessages(name2, charDescription, charPersonality, Scenario, worldInfoBefore, worldInfoAfter, extensionPrompt, bias, type, quietPrompt) {
     const chatCompletion = promptManager.getChatCompletion();
 
     // Prepare messages
     const worldInfoBeforeMessage = chatCompletion.makeSystemMessage(formatWorldInfo(worldInfoBefore));
     const worldInfoAfterMessage = chatCompletion.makeSystemMessage(formatWorldInfo(worldInfoAfter));
-    const characterInfoMessages = chatCompletion.makeSystemMessage(substituteParams(storyString));
+    const charDescriptionMessage = chatCompletion.makeSystemMessage(substituteParams(charDescription));
+
+    const charPersonalityMessage = chatCompletion.makeSystemMessage(
+        name2 + 's personality: ' + substituteParams(charPersonality)
+    );
+
+    const scenarioMessage = chatCompletion.makeSystemMessage(
+        'Circumstances and context of the dialogue: ' + substituteParams(Scenario)
+    );
+
     const newChatMessage = chatCompletion.makeSystemMessage('[Start new chat]');
     const chatMessages = openai_msgs;
     const biasMessage = chatCompletion.makeSystemMessage(bias.trim());
@@ -353,7 +362,9 @@ async function prepareOpenAIMessages(name2, storyString, worldInfoBefore, worldI
     chatCompletion
         .replace('worldInfoBefore', worldInfoBeforeMessage)
         .replace('worldInfoAfter', worldInfoAfterMessage)
-        .replace('characterInfo', characterInfoMessages)
+        .replace('charDescription', charDescriptionMessage)
+        .replace('charPersonality', charPersonalityMessage)
+        .replace('scenario', scenarioMessage)
         .replace('newMainChat', newChatMessage)
         .replace('chatHistory', chatMessages)
 
@@ -400,13 +411,10 @@ async function prepareOpenAIMessages(name2, storyString, worldInfoBefore, worldI
         {...tokenHandler.getCounts(), ...chatCompletion.getTokenCounts()}
     );
 
-    // Save settings with updated token calculation and return context
-    return promptManager.saveServiceSettings().then(() => {
-        const openai_msgs_tosend = chatCompletion.getChat();
-        openai_messages_count = openai_msgs_tosend.filter(x => x.role === "user" || x.role === "assistant").length;
+    const openai_msgs_tosend = chatCompletion.getChat();
+    openai_messages_count = openai_msgs_tosend.filter(x => x.role === "user" || x.role === "assistant").length;
 
-        return [openai_msgs_tosend, false];
-    });
+    return [openai_msgs_tosend, false];
 }
 
 function getGroupMembers(activeGroup) {
